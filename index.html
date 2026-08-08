@@ -1462,9 +1462,9 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         if (!L.v) continue;
         if (Math.abs(current - (offsets[L.idx] || 0)) > vw * 1.25) continue;   // kept mounted, skip render when far off-screen
         if (L.v.obj){
-          L.v.obj.rotation.y = reduce ? 0 : (t * 0.45 + lmx * 0.5);          // slow auto-rotate (~14s) + lean
-          L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.2 + Math.sin(t * 0.6) * 0.02);
-          L.v.obj.position.y = reduce ? 0 : Math.sin(t * 0.8) * 0.03;        // float around centre (group origin)
+          L.v.obj.rotation.y = reduce ? 0 : (Math.sin(t * 0.698) * 1.047 + lmx * 0.3);   // gentle ±60° left-right sway (~9s) + cursor lean
+          L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.14);                                // subtle cursor lean only
+          L.v.obj.position.y = reduce ? 0 : Math.sin(t * 0.8) * 0.03;                     // gentle float
         }
         L.v.r.render(L.v.scene, L.v.cam);
       }
