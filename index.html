@@ -1462,7 +1462,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         if (!L.v) continue;
         if (Math.abs(current - (offsets[L.idx] || 0)) > vw * 1.25) continue;   // kept mounted, skip render when far off-screen
         if (L.v.obj){
-          L.v.obj.rotation.y = reduce ? 0 : (Math.sin(t * 0.698) * 0.785 + lmx * 0.3);   // gentle ±45° left-right sway (~9s) + cursor lean
+          L.v.obj.rotation.y = reduce ? 0 : (Math.sin(t * 0.698) * 0.698 + lmx * 0.3);   // gentle ±40° left-right sway (~9s) + cursor lean
           L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.14);                                // subtle cursor lean only
           L.v.obj.position.y = reduce ? 0 : Math.sin(t * 0.8) * 0.03;                     // gentle float
         }
