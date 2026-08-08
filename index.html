@@ -15,6 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
 <style>
 /* =================================================================
@@ -216,11 +217,10 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
   opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease;}
 .appmodal.open{opacity:1;visibility:visible;}
 .appmodal-backdrop{position:absolute;inset:0;background:rgba(4,6,16,.62);-webkit-backdrop-filter:blur(12px) saturate(120%);backdrop-filter:blur(12px) saturate(120%);cursor:pointer;}
-.appmodal-stage{position:relative;z-index:1;transform:scale(.86);opacity:.35;transition:transform .34s cubic-bezier(.2,.9,.3,1),opacity .3s ease;}
-.appmodal.open .appmodal-stage{transform:scale(1);opacity:1;}
-.appmodal-screen{position:relative;width:min(90vw,1400px);height:min(86vh,900px);background:#fff;border-radius:22px;overflow:hidden;
+.appmodal-stage{position:relative;z-index:1;}
+.appmodal-screen{position:relative;background:#fff;border-radius:22px;overflow:hidden;
   box-shadow:0 50px 130px -30px rgba(0,0,0,.78),0 0 0 1px rgba(255,255,255,.09);}
-.appmodal-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#fff;}
+.appmodal-frame{position:absolute;top:0;left:0;border:0;display:block;background:#fff;}
 .appmodal-load{position:absolute;inset:0;z-index:1;background:linear-gradient(110deg,#e9edf4 30%,#f6f8fc 50%,#e9edf4 70%);background-size:220% 100%;animation:phoneShim 1.4s linear infinite;}
 .appmodal.ready .appmodal-load{opacity:0;pointer-events:none;transition:opacity .5s ease;}
 @keyframes phoneShim{from{background-position:200% 0}to{background-position:-200% 0}}
@@ -553,7 +553,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         </div>
       </div>
       <div class="side logo-side">
-        <button class="logo3d" type="button" data-model="models/urgentcarex.glb" data-app="https://urgentcarexthemedesignconcept1versi-seven.vercel.app/" data-shape="portrait" data-title="UrgentCareX" aria-label="View the UrgentCareX app">
+        <button class="logo3d" type="button" data-model="models/urgentcarex.glb" data-app="https://urgentcarexthemedesignconcept1versi-seven.vercel.app/" data-fit="440x950" data-title="UrgentCareX" aria-label="View the UrgentCareX app">
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -584,7 +584,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         </div>
       </div>
       <div class="side logo-side">
-        <button class="logo3d" type="button" data-model="models/behavebridge.glb" data-app="https://education-lightthemev1.vercel.app/" data-shape="landscape" data-title="BehaveBridge" aria-label="View the BehaveBridge app">
+        <button class="logo3d" type="button" data-model="models/behavebridge.glb" data-app="https://education-lightthemev1.vercel.app/" data-fit="1280x1080" data-title="BehaveBridge" aria-label="View the BehaveBridge app">
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -613,7 +613,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         </div>
       </div>
       <div class="side logo-side">
-        <button class="logo3d" type="button" data-model="models/dohuub.glb" data-app="https://dohuub-app-light-blue-theme.vercel.app/" data-shape="portrait" data-title="DOHUUB" aria-label="View the DOHUUB app">
+        <button class="logo3d" type="button" data-model="models/dohuub.glb" data-app="https://dohuub-app-light-blue-theme.vercel.app/" data-fit="440x950" data-title="DOHUUB" aria-label="View the DOHUUB app">
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -1399,15 +1399,15 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       if (!cache[url]) cache[url] = new Promise(function (res, rej){ loader.load(url, function (g){ res(g.scene); }, undefined, rej); });
       return cache[url];
     }
-    // purely diffuse (matte) materials, like the Assemble prototype
+    // fully flat / unlit — zero shine, zero shading (pure model colour + texture)
     function matteClone(src){
       var root = src.clone(true);
       root.traverse(function (o){
         if (o.isMesh && o.material){
           var old = Array.isArray(o.material) ? o.material[0] : o.material;
           if (old.map) old.map.encoding = THREE.sRGBEncoding;
-          o.material = new THREE.MeshLambertMaterial({ map: old.map || null, color: old.color ? old.color.clone() : new THREE.Color(0xffffff),
-                                                       transparent: old.transparent, opacity: old.opacity, side: old.side });
+          o.material = new THREE.MeshBasicMaterial({ map: old.map || null, color: old.color ? old.color.clone() : new THREE.Color(0xffffff),
+                                                     transparent: old.transparent, opacity: old.opacity, side: old.side });
         }
       });
       return root;
@@ -1416,12 +1416,12 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
     // ---- logos ----
     var logos = [].map.call(document.querySelectorAll('.logo3d'), function (btn){
       return { btn: btn, idx: allPanels.indexOf(btn.closest('.panel')),
-               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), title: btn.getAttribute('data-title'), v: null };
+               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), title: btn.getAttribute('data-title'), fit: btn.getAttribute('data-fit'), v: null };
     });
     logos.forEach(function (L){
       var dx = 0, dy = 0;
       L.btn.addEventListener('mousedown', function (e){ dx = e.clientX; dy = e.clientY; });
-      L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.title); });
+      L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.title, L.fit); });
       if (!loader) L.btn.classList.add('loaded');
     });
     function sizeV(L){
@@ -1434,14 +1434,10 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       if (L.v || !loader) return;
       var r = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
       r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); r.setClearAlpha(0);
-      r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.7;
+      r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.NoToneMapping;   // flat / unlit colours
       L.btn.appendChild(r.domElement);
       var scene = new THREE.Scene();
       var cam = new THREE.PerspectiveCamera(35, 1, 0.05, 100); cam.position.set(0, 0, 4);
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4048, 1.7));
-      var k = new THREE.DirectionalLight(0xffffff, 1.9); k.position.set(0.6, 2.4, 3.5); scene.add(k);
-      var fl = new THREE.DirectionalLight(0xdce6ff, 1.0); fl.position.set(-3.5, 1.2, 2.0); scene.add(fl);
-      var rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(0, 2.5, -4); scene.add(rim);
       var v = L.v = { r: r, scene: scene, cam: cam, obj: null };
       sizeV(L);
       loadModel(L.model).then(function (src){
@@ -1457,13 +1453,14 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
     window.addEventListener('resize', function (){ logos.forEach(sizeV); });
     if (loader) logos.forEach(mount);                               // load once + mount all three at startup
 
-    // render loop — keep ALL viewers rendering (never unmounted)
+    // render loop — all mounted/loaded once; only the logo(s) near view actually render (perf)
     (function loop(){
       requestAnimationFrame(loop);
-      var t = (performance.now() - t0) / 1000;
+      var t = (performance.now() - t0) / 1000, vw = window.innerWidth;
       for (var i = 0; i < logos.length; i++){
         var L = logos[i];
         if (!L.v) continue;
+        if (Math.abs(current - (offsets[L.idx] || 0)) > vw * 1.25) continue;   // kept mounted, skip render when far off-screen
         if (L.v.obj){
           L.v.obj.rotation.y = reduce ? 0 : (t * 0.45 + lmx * 0.5);          // slow auto-rotate (~14s) + lean
           L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.2 + Math.sin(t * 0.6) * 0.02);
@@ -1482,22 +1479,38 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
     var cover = document.getElementById('appmodalCover');
     var tcur = document.getElementById('touchcursor');
     var htmlEl = document.documentElement;
-    function openApp(url, title){
-      modal.classList.remove('ready', 'live');
+    var screenEl = document.getElementById('appmodalScreen');
+    var stageEl = modal ? modal.querySelector('.appmodal-stage') : null;
+    var curFit = { w: 1280, h: 900 };
+    function fitApp(){                                   // scale the app to fit fully — no scrolling
+      var maxW = window.innerWidth * 0.95, maxH = window.innerHeight * 0.93;
+      var scale = Math.min(maxW / curFit.w, maxH / curFit.h);
+      screenEl.style.width = Math.round(curFit.w * scale) + 'px';
+      screenEl.style.height = Math.round(curFit.h * scale) + 'px';
+      frameEl.style.width = curFit.w + 'px'; frameEl.style.height = curFit.h + 'px';
+      frameEl.style.transformOrigin = 'top left'; frameEl.style.transform = 'scale(' + scale + ')';
+    }
+    function openApp(url, title, fit){
+      var wh = (fit || '1280x900').toLowerCase().split('x');
+      curFit.w = parseInt(wh[0], 10) || 1280; curFit.h = parseInt(wh[1], 10) || 900;
+      fitApp();
+      modal.classList.remove('ready');
       frameEl.title = title + ' — app';
       frameEl.onload = function (){ modal.classList.add('ready'); };
       frameEl.src = url;
       modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
-      htmlEl.classList.add('modal-open'); htmlEl.classList.remove('cursor-custom');   // native cursor in modal; reticle hidden
-      setLive(false);
+      htmlEl.classList.add('modal-open'); htmlEl.classList.remove('cursor-custom');
+      setLive(true);                                    // interactive (clickable) by default
+      if (window.gsap && stageEl) gsap.fromTo(stageEl, { scale: 0.82, opacity: 0, y: 12 }, { scale: 1, opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.4)' });
     }
     function closeApp(){
       modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
       htmlEl.classList.remove('modal-open'); htmlEl.classList.add('cursor-custom');
       tcur.classList.remove('show');
+      if (window.gsap && stageEl) gsap.to(stageEl, { scale: 0.9, opacity: 0, duration: 0.22, ease: 'power2.in' });
       setTimeout(function (){ if (!modal.classList.contains('open')){ frameEl.removeAttribute('src'); modal.classList.remove('ready', 'live'); } }, 340);
     }
-    function setLive(on){ modal.classList.toggle('live', on); interactLabel.textContent = on ? 'Live' : 'Interact'; if (on) tcur.classList.remove('show'); }
+    function setLive(on){ modal.classList.toggle('live', on); interactLabel.textContent = on ? 'Preview' : 'Interact'; if (on) tcur.classList.remove('show'); }
     var tcx = 0, tcy = 0, tcs = 1;
     function applyTC(){ tcur.style.transform = 'translate(' + tcx + 'px,' + tcy + 'px) scale(' + tcs + ')'; }
     if (modal && cover){
@@ -1505,6 +1518,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       interactBtn.addEventListener('click', function (){ setLive(!modal.classList.contains('live')); });
       modal.addEventListener('click', function (e){ if (e.target.hasAttribute('data-close')) closeApp(); });
       window.addEventListener('keydown', function (e){ if (e.key === 'Escape' && modal.classList.contains('open')) closeApp(); });
+      window.addEventListener('resize', function (){ if (modal.classList.contains('open')) fitApp(); });
       cover.addEventListener('mousemove', function (e){ tcx = e.clientX; tcy = e.clientY; applyTC(); tcur.classList.add('show'); });
       cover.addEventListener('mouseleave', function (){ tcur.classList.remove('show'); });
       cover.addEventListener('mousedown', function (e){
