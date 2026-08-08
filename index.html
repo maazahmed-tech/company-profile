@@ -1424,9 +1424,6 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.title); });
       if (!loader) L.btn.classList.add('loaded');
     });
-    // preload all three once, quietly, at startup
-    if (loader) logos.forEach(function (L){ loadModel(L.model).then(function (){ L.btn.classList.add('loaded'); }).catch(function (){}); });
-
     function sizeV(L){
       if (!L.v) return;
       var w = L.btn.clientWidth || 1, h = L.btn.clientHeight || 1;
@@ -1448,43 +1445,31 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       var v = L.v = { r: r, scene: scene, cam: cam, obj: null };
       sizeV(L);
       loadModel(L.model).then(function (src){
-        if (L.v !== v) return;                                   // unmounted while loading
         var o = matteClone(src);
         var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
-        o.position.sub(c);
+        o.position.sub(c);                                          // centre the geometry inside a wrapper group
+        var grp = new THREE.Group(); grp.add(o); scene.add(grp);    // group origin = geometry centre
         var maxDim = Math.max(s.x, s.y, s.z) || 1, fov = cam.fov * Math.PI / 180;
-        cam.position.set(0, 0, (maxDim / 2) / Math.tan(fov / 2) * 1.42); cam.lookAt(0, 0, 0);   // camera-fit
-        scene.add(o); v.obj = o; L.btn.classList.add('loaded');
+        cam.position.set(0, 0, (maxDim / 2) / Math.tan(fov / 2) * 1.42); cam.lookAt(0, 0, 0);   // camera-fit, centred
+        v.obj = grp; L.btn.classList.add('loaded');
       }).catch(function (){});
     }
-    function unmount(L){
-      if (!L.v) return;
-      try { L.v.r.dispose(); var d = L.v.r.domElement; if (d && d.parentNode) d.parentNode.removeChild(d); } catch (e){}
-      L.v = null;
-    }
     window.addEventListener('resize', function (){ logos.forEach(sizeV); });
+    if (loader) logos.forEach(mount);                               // load once + mount all three at startup
 
-    // render loop — only ONE active viewer (the nearest logo in view)
+    // render loop — keep ALL viewers rendering (never unmounted)
     (function loop(){
       requestAnimationFrame(loop);
-      var vw = window.innerWidth, t = (performance.now() - t0) / 1000, active = -1, best = Infinity;
+      var t = (performance.now() - t0) / 1000;
       for (var i = 0; i < logos.length; i++){
-        var d = Math.abs(current - (offsets[logos[i].idx] || 0));
-        if (d < vw * 0.9 && d < best){ best = d; active = i; }
-      }
-      for (var j = 0; j < logos.length; j++){
-        var L = logos[j];
-        if (j === active){
-          if (!L.v) mount(L);
-          if (L.v){
-            if (L.v.obj){
-              L.v.obj.rotation.y = reduce ? 0 : (t * 0.45 + lmx * 0.5);          // slow auto-rotate (~14s) + lean
-              L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.2 + Math.sin(t * 0.6) * 0.02);
-              L.v.obj.position.y = reduce ? 0 : Math.sin(t * 0.8) * 0.03;
-            }
-            L.v.r.render(L.v.scene, L.v.cam);
-          }
-        } else if (L.v){ unmount(L); }
+        var L = logos[i];
+        if (!L.v) continue;
+        if (L.v.obj){
+          L.v.obj.rotation.y = reduce ? 0 : (t * 0.45 + lmx * 0.5);          // slow auto-rotate (~14s) + lean
+          L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.2 + Math.sin(t * 0.6) * 0.02);
+          L.v.obj.position.y = reduce ? 0 : Math.sin(t * 0.8) * 0.03;        // float around centre (group origin)
+        }
+        L.v.r.render(L.v.scene, L.v.cam);
       }
     })();
 
