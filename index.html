@@ -613,7 +613,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         </div>
       </div>
       <div class="side logo-side">
-        <button class="logo3d" type="button" data-model="models/dohuub.glb" data-app="https://dohuub-app-light-blue-theme.vercel.app/" data-fit="440x950" data-title="DOHUUB" aria-label="View the DOHUUB app">
+        <button class="logo3d" type="button" data-model="models/dohuub.glb" data-app="https://dohuub-app-light-blue-theme.vercel.app/" data-fit="440x950" data-title="DOHUUB" data-gradient="4ca6fa,004aad,135" aria-label="View the DOHUUB app">
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -1412,11 +1412,34 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       });
       return root;
     }
+    // recolour a model with a CSS-style linear gradient baked into vertex colours
+    function applyGradient(root, hexA, hexB, deg){
+      var cA = new THREE.Color(hexA).convertSRGBToLinear(), cB = new THREE.Color(hexB).convertSRGBToLinear();
+      var rad = deg * Math.PI / 180, dx = Math.sin(rad), dy = Math.cos(rad);
+      root.updateWorldMatrix(true, true);
+      var rootInv = new THREE.Matrix4().copy(root.matrixWorld).invert(), tmp = new THREE.Vector3();
+      var meshes = [], pmin = Infinity, pmax = -Infinity;
+      root.traverse(function (o){
+        if (o.isMesh && o.geometry && o.geometry.attributes.position){
+          var m = new THREE.Matrix4().multiplyMatrices(rootInv, o.matrixWorld);
+          var pos = o.geometry.attributes.position, n = pos.count, ps = new Float32Array(n);
+          for (var i = 0; i < n; i++){ tmp.set(pos.getX(i), pos.getY(i), pos.getZ(i)).applyMatrix4(m); var p = tmp.x * dx + tmp.y * dy; ps[i] = p; if (p < pmin) pmin = p; if (p > pmax) pmax = p; }
+          meshes.push({ o: o, ps: ps });
+        }
+      });
+      var span = (pmax - pmin) || 1;
+      meshes.forEach(function (mm){
+        var n = mm.ps.length, col = new Float32Array(n * 3);
+        for (var i = 0; i < n; i++){ var f = (mm.ps[i] - pmin) / span; col[i*3] = cA.r + (cB.r - cA.r) * f; col[i*3+1] = cA.g + (cB.g - cA.g) * f; col[i*3+2] = cA.b + (cB.b - cA.b) * f; }
+        mm.o.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        mm.o.material = new THREE.MeshBasicMaterial({ vertexColors: true });
+      });
+    }
 
     // ---- logos ----
     var logos = [].map.call(document.querySelectorAll('.logo3d'), function (btn){
       return { btn: btn, idx: allPanels.indexOf(btn.closest('.panel')),
-               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), title: btn.getAttribute('data-title'), fit: btn.getAttribute('data-fit'), v: null };
+               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), title: btn.getAttribute('data-title'), fit: btn.getAttribute('data-fit'), grad: btn.getAttribute('data-gradient'), v: null };
     });
     logos.forEach(function (L){
       var dx = 0, dy = 0;
@@ -1442,6 +1465,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       sizeV(L);
       loadModel(L.model).then(function (src){
         var o = matteClone(src);
+        if (L.grad){ var g = L.grad.split(','); applyGradient(o, '#' + g[0].replace('#', ''), '#' + g[1].replace('#', ''), parseFloat(g[2]) || 135); }
         var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
         o.position.sub(c);                                          // centre the geometry inside a wrapper group
         var grp = new THREE.Group(); grp.add(o); scene.add(grp);    // group origin = geometry centre
