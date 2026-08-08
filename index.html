@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <style>
 /* =================================================================
@@ -196,30 +197,39 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
 .centered-panel .lead{margin-left:auto;margin-right:auto;}
 .centered-panel .links,.centered-panel .stats{justify-content:center;}
 
-/* ---- live-app phone embeds (project slides) ---- */
-.phone-side{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
-.phone{position:relative;height:clamp(340px,72vh,600px);aspect-ratio:312/640;background:#0a0c13;border-radius:42px;
-  padding:11px;border:1px solid rgba(255,255,255,.06);will-change:transform;transition:box-shadow .35s ease;
-  box-shadow:0 42px 90px -34px rgba(4,8,22,.9),inset 0 0 0 2px rgba(255,255,255,.045),inset 0 2px 2px rgba(255,255,255,.08);}
-.phone::before{content:"";position:absolute;right:-2px;top:150px;width:2px;height:54px;border-radius:2px;background:#23262f;}
-.phone::after{content:"";position:absolute;left:-2px;top:118px;width:2px;height:26px;border-radius:2px;background:#23262f;box-shadow:0 40px 0 #23262f,0 80px 0 #23262f;}
-.phone-scr{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#fff;}
-.phone-scr iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#fff;}
-.phone-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:32%;height:20px;background:#05070d;border-radius:12px;z-index:5;pointer-events:none;}
-.phone-load{position:absolute;inset:0;z-index:2;background:linear-gradient(110deg,#e9edf4 30%,#f6f8fc 50%,#e9edf4 70%);background-size:220% 100%;animation:phoneShim 1.4s linear infinite;}
+/* ---- 3D logo trigger (project slides) ---- */
+.logo-side{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+.logo3d{position:relative;height:clamp(300px,64vh,540px);width:clamp(300px,34vw,520px);background:transparent;border:0;padding:0;cursor:pointer;
+  display:block;will-change:transform;}
+.logo3d-cv{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.logo3d-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--faint);}
+.logo3d.loaded .logo3d-load{display:none;}
+.logo3d-hint{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.07em;
+  color:#fff;background:rgba(9,11,20,.66);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:9px 16px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 22px -8px rgba(0,0,0,.55);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  transition:transform .25s ease,background .25s ease;pointer-events:none;}
+.logo3d-hint b{font-weight:400;color:var(--t-magenta);font-size:14px;line-height:1;}
+.logo3d:hover .logo3d-hint{transform:translateX(-50%) translateY(-3px);background:rgba(9,11,20,.85);}
+
+/* ---- live-app popup ---- */
+.appmodal{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:5vh 4vw;
+  opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease;}
+.appmodal.open{opacity:1;visibility:visible;}
+.appmodal-backdrop{position:absolute;inset:0;background:rgba(4,6,16,.6);-webkit-backdrop-filter:blur(11px) saturate(120%);backdrop-filter:blur(11px) saturate(120%);cursor:pointer;}
+.appmodal-stage{position:relative;z-index:1;transform:scale(.84);opacity:.35;transition:transform .34s cubic-bezier(.2,.9,.3,1),opacity .3s ease;}
+.appmodal.open .appmodal-stage{transform:scale(1);opacity:1;}
+.appmodal-screen{position:relative;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 50px 120px -30px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.09);}
+.appmodal-screen.portrait{height:min(86vh,880px);aspect-ratio:400/860;max-width:92vw;}
+.appmodal-screen.landscape{width:min(92vw,1180px);height:min(80vh,760px);}
+.appmodal-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#fff;}
+.appmodal-load{position:absolute;inset:0;z-index:1;background:linear-gradient(110deg,#e9edf4 30%,#f6f8fc 50%,#e9edf4 70%);background-size:220% 100%;animation:phoneShim 1.4s linear infinite;}
+.appmodal.ready .appmodal-load{opacity:0;pointer-events:none;transition:opacity .5s ease;}
 @keyframes phoneShim{from{background-position:200% 0}to{background-position:-200% 0}}
-.phone.loaded .phone-load{opacity:0;pointer-events:none;transition:opacity .6s ease;}
-.phone-lock{position:absolute;inset:0;z-index:4;background:transparent;border:0;padding:0 0 22px;cursor:pointer;touch-action:pan-y;
-  display:flex;align-items:flex-end;justify-content:center;}
-.phone-lock .pill{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:#fff;background:rgba(9,11,20,.74);
-  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:8px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
-  box-shadow:0 8px 22px -8px rgba(0,0,0,.6);display:inline-flex;align-items:center;gap:8px;transition:opacity .3s ease,transform .3s ease;}
-.phone-lock .livedot{width:6px;height:6px;border-radius:50%;background:#39d98a;animation:livePulse 1.8s ease-out infinite;}
-@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(57,217,138,.55)}70%{box-shadow:0 0 0 7px rgba(57,217,138,0)}100%{box-shadow:0 0 0 0 rgba(57,217,138,0)}}
-.phone.active{box-shadow:0 46px 100px -30px rgba(60,20,120,.6),inset 0 0 0 2px rgba(255,255,255,.06);}
-.phone.active .phone-lock{pointer-events:none;}
-.phone.active .phone-lock .pill{opacity:0;transform:translateY(10px);}
-@media (prefers-reduced-motion:reduce){.phone-load,.phone-lock .livedot{animation:none;}}
+.appmodal-close{position:absolute;top:-15px;right:-15px;z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+  background:rgba(14,16,26,.92);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 30px -8px rgba(0,0,0,.6);transition:transform .2s ease,background .2s ease;}
+.appmodal-close:hover{transform:scale(1.08);background:rgba(30,32,46,.96);}
+@media (max-width:760px){.appmodal-screen.portrait{height:auto;width:86vw;aspect-ratio:400/820;}.appmodal-screen.landscape{width:92vw;height:auto;aspect-ratio:9/15;}.appmodal-close{top:6px;right:6px;}}
 
 /* review cards — themed per source platform */
 .review-card{padding:0;overflow:hidden;display:flex;flex-direction:column;}
@@ -522,15 +532,12 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
           <a class="tlink" href="https://urgentcarexthemedesignconcept1versi-seven.vercel.app/" target="_blank" rel="noopener">Designs ↗</a>
         </div>
       </div>
-      <div class="side phone-side">
-        <div class="phone">
-          <div class="phone-scr">
-            <div class="phone-load"></div>
-            <iframe title="UrgentCareX — live app" data-src="https://urgentcarexthemedesignconcept1versi-seven.vercel.app/" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-            <div class="phone-notch"></div>
-            <button class="phone-lock" type="button" aria-label="Tap to interact with the live app"><span class="pill"><span class="livedot"></span>Tap to interact</span></button>
-          </div>
-        </div>
+      <div class="side logo-side">
+        <button class="logo3d" type="button" data-model="models/urgentcarex.glb" data-app="https://urgentcarexthemedesignconcept1versi-seven.vercel.app/" data-shape="portrait" data-title="UrgentCareX" aria-label="View the UrgentCareX app">
+          <canvas class="logo3d-cv"></canvas>
+          <span class="logo3d-load">loading…</span>
+          <span class="logo3d-hint">View app <b>↗</b></span>
+        </button>
       </div>
     </section>
 
@@ -557,15 +564,12 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
           <a class="tlink" href="https://education-lightthemev1.vercel.app/" target="_blank" rel="noopener">Designs ↗</a>
         </div>
       </div>
-      <div class="side phone-side">
-        <div class="phone">
-          <div class="phone-scr">
-            <div class="phone-load"></div>
-            <iframe title="BehaveBridge — live app" data-src="https://education-lightthemev1.vercel.app/" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-            <div class="phone-notch"></div>
-            <button class="phone-lock" type="button" aria-label="Tap to interact with the live app"><span class="pill"><span class="livedot"></span>Tap to interact</span></button>
-          </div>
-        </div>
+      <div class="side logo-side">
+        <button class="logo3d" type="button" data-model="models/behavebridge.glb" data-app="https://education-lightthemev1.vercel.app/" data-shape="landscape" data-title="BehaveBridge" aria-label="View the BehaveBridge app">
+          <canvas class="logo3d-cv"></canvas>
+          <span class="logo3d-load">loading…</span>
+          <span class="logo3d-hint">View app <b>↗</b></span>
+        </button>
       </div>
     </section>
 
@@ -590,15 +594,12 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
           <a class="tlink" href="https://dohuub-app-light-blue-theme.vercel.app/" target="_blank" rel="noopener">Designs ↗</a>
         </div>
       </div>
-      <div class="side phone-side">
-        <div class="phone">
-          <div class="phone-scr">
-            <div class="phone-load"></div>
-            <iframe title="DOHUUB — live app" data-src="https://dohuub-app-light-blue-theme.vercel.app/" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-            <div class="phone-notch"></div>
-            <button class="phone-lock" type="button" aria-label="Tap to interact with the live app"><span class="pill"><span class="livedot"></span>Tap to interact</span></button>
-          </div>
-        </div>
+      <div class="side logo-side">
+        <button class="logo3d" type="button" data-model="models/dohuub.glb" data-app="https://dohuub-app-light-blue-theme.vercel.app/" data-shape="portrait" data-title="DOHUUB" aria-label="View the DOHUUB app">
+          <canvas class="logo3d-cv"></canvas>
+          <span class="logo3d-load">loading…</span>
+          <span class="logo3d-hint">View app <b>↗</b></span>
+        </button>
       </div>
     </section>
 
@@ -713,6 +714,18 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
   <div class="progress"><div class="fill" id="progress-fill"></div></div>
 
 </div><!-- /root -->
+
+  <!-- live-app popup -->
+  <div class="appmodal" id="appmodal" aria-hidden="true">
+    <div class="appmodal-backdrop" data-close></div>
+    <div class="appmodal-stage">
+      <button class="appmodal-close" id="appmodalClose" type="button" aria-label="Close">×</button>
+      <div class="appmodal-screen" id="appmodalScreen">
+        <div class="appmodal-load"></div>
+        <iframe class="appmodal-frame" id="appmodalFrame" title="" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
 
 <!-- custom cursor (gradient reticle) + fading trail (desktop only) -->
 <canvas id="trail"></canvas>
@@ -1344,61 +1357,97 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
   })();
 
   // =================================================================
-  // LIVE-APP PHONES — lazy-load, tap-to-activate, float + pointer tilt
+  // 3D LOGOS (project slides) + LIVE-APP POPUP
   // =================================================================
-  (function initPhones(){
+  (function initLogos(){
+    var THREE = window.THREE;
     var allPanels = [].slice.call(document.querySelectorAll('.panel'));
-    var phones = [].map.call(document.querySelectorAll('.phone'), function (el, i){
-      return { el: el, iframe: el.querySelector('iframe'), idx: allPanels.indexOf(el.closest('.panel')), phase: i * 1.7, loaded: false, active: false };
-    });
-    if (!phones.length) return;
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function load(p){
-      if (p.loaded) return;
-      p.loaded = true;
-      p.iframe.src = p.iframe.getAttribute('data-src');
-      p.iframe.addEventListener('load', function (){ p.el.classList.add('loaded'); });
+    // ---- popup ----
+    var modal = document.getElementById('appmodal');
+    var frameEl = document.getElementById('appmodalFrame');
+    var screenEl = document.getElementById('appmodalScreen');
+    var closeBtn = document.getElementById('appmodalClose');
+    function openApp(url, shape, title){
+      screenEl.className = 'appmodal-screen ' + (shape === 'landscape' ? 'landscape' : 'portrait');
+      frameEl.title = title + ' — live app';
+      modal.classList.remove('ready');
+      frameEl.onload = function (){ modal.classList.add('ready'); };
+      frameEl.src = url;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
     }
-    // catch-all loader for mobile native scroll (and a desktop backup)
-    if ('IntersectionObserver' in window){
-      var io = new IntersectionObserver(function (es){
-        es.forEach(function (en){
-          if (!en.isIntersecting) return;
-          for (var i = 0; i < phones.length; i++){ if (phones[i].el === en.target){ load(phones[i]); io.unobserve(en.target); } }
-        });
-      }, { rootMargin: '300px' });
-      phones.forEach(function (p){ io.observe(p.el); });
+    function closeApp(){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(function (){ if (!modal.classList.contains('open')){ frameEl.removeAttribute('src'); modal.classList.remove('ready'); } }, 340);
+    }
+    if (modal){
+      closeBtn.addEventListener('click', closeApp);
+      modal.addEventListener('click', function (e){ if (e.target.hasAttribute('data-close')) closeApp(); });
+      window.addEventListener('keydown', function (e){ if (e.key === 'Escape' && modal.classList.contains('open')) closeApp(); });
     }
 
-    // tap the inert overlay to interact; a drag over it still scrolls the deck. Mobile: tap opens the app.
-    function setActive(p){ phones.forEach(function (q){ q.active = (q === p); q.el.classList.toggle('active', q === p); }); }
-    function lockAll(){ phones.forEach(function (q){ q.active = false; q.el.classList.remove('active'); }); }
-    phones.forEach(function (p){
-      var lock = p.el.querySelector('.phone-lock'), dx = 0, dy = 0;
-      lock.addEventListener('mousedown', function (e){ dx = e.clientX; dy = e.clientY; });
-      lock.addEventListener('click', function (e){
-        if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) >= 6) return;   // that was a drag, not a tap
-        e.stopPropagation();
-        if (isMobile()) window.open(p.iframe.getAttribute('data-src'), '_blank', 'noopener');
-        else setActive(p);
-      });
+    // ---- 3D logo viewers ----
+    var loader = (THREE && THREE.GLTFLoader) ? new THREE.GLTFLoader() : null;
+    var logos = [].map.call(document.querySelectorAll('.logo3d'), function (btn){
+      return { btn: btn, canvas: btn.querySelector('.logo3d-cv'), idx: allPanels.indexOf(btn.closest('.panel')),
+               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), shape: btn.getAttribute('data-shape'),
+               title: btn.getAttribute('data-title'), started: false, obj: null, renderer: null, scene: null, camera: null };
     });
-    window.addEventListener('mousedown', function (e){ if (!e.target.closest('.phone')) lockAll(); });
 
-    (function frame(){
-      requestAnimationFrame(frame);
-      var vw = window.innerWidth;
-      for (var i = 0; i < phones.length; i++){
-        var p = phones[i], off = offsets[p.idx] || 0, dist = Math.abs(current - off);
-        if (!p.loaded && !isMobile() && dist < vw * 1.4) load(p);            // desktop proximity load
-        if (!p.active && !reduce && !isMobile() && dist < vw * 1.15){
-          var t = (performance.now() - t0) / 1000;
-          var fy = Math.sin(t * 0.8 + p.phase) * 5;
-          p.el.style.transform = 'translateY(' + fy.toFixed(2) + 'px) perspective(1300px) rotateY(' + (lmx * 3).toFixed(2) + 'deg) rotateX(' + (-lmy * 2).toFixed(2) + 'deg)';
-        } else {
-          p.el.style.transform = 'none';
+    logos.forEach(function (L){
+      var dx = 0, dy = 0;
+      L.btn.addEventListener('mousedown', function (e){ dx = e.clientX; dy = e.clientY; });
+      L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.shape, L.title); });
+      if (!loader) L.btn.classList.add('loaded');
+    });
+
+    function sizeViewer(L){
+      if (!L.renderer) return;
+      var w = L.canvas.clientWidth || 1, h = L.canvas.clientHeight || 1;
+      L.renderer.setSize(w, h, false);
+      L.camera.aspect = w / h; L.camera.updateProjectionMatrix();
+    }
+    function initViewer(L){
+      if (L.started || !loader) return;
+      L.started = true;
+      var r = new THREE.WebGLRenderer({ canvas: L.canvas, antialias: true, alpha: true });
+      r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+      r.outputEncoding = THREE.sRGBEncoding;
+      var scene = new THREE.Scene();
+      var cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100); cam.position.set(0, 0.12, 2.7);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+      var k = new THREE.DirectionalLight(0xffffff, 2.3); k.position.set(2, 3, 2.5); scene.add(k);
+      var fl = new THREE.DirectionalLight(0x88aaff, 1.1); fl.position.set(-2.5, 1, -1.5); scene.add(fl);
+      var bl = new THREE.DirectionalLight(0xff66cc, 0.7); bl.position.set(0, -1.5, -2); scene.add(bl);
+      var pmrem = new THREE.PMREMGenerator(r);
+      var envS = new THREE.Scene(); envS.background = new THREE.Color(0x4a5568);
+      scene.environment = pmrem.fromScene(envS, 0.03).texture;
+      L.renderer = r; L.scene = scene; L.camera = cam;
+      sizeViewer(L);
+      loader.load(L.model, function (g){
+        var o = g.scene, box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+        o.position.sub(c); var md = Math.max(s.x, s.y, s.z) || 1; o.scale.setScalar(1.35 / md);
+        scene.add(o); L.obj = o; L.btn.classList.add('loaded');
+      }, undefined, function (){ L.btn.classList.add('loaded'); });
+    }
+    window.addEventListener('resize', function (){ logos.forEach(sizeViewer); });
+
+    (function loop(){
+      requestAnimationFrame(loop);
+      var vw = window.innerWidth, t = (performance.now() - t0) / 1000;
+      for (var i = 0; i < logos.length; i++){
+        var L = logos[i], off = offsets[L.idx] || 0, near = Math.abs(current - off) < vw * 1.3;
+        if (near && !L.started) initViewer(L);
+        if (!L.renderer || !near) continue;                 // pause render when off-screen
+        if (L.obj){
+          L.obj.rotation.y = reduce ? 0.5 : (t * 0.5 + lmx * 0.45);   // auto-rotate + lean to cursor
+          L.obj.rotation.x = reduce ? 0 : (-lmy * 0.18 + Math.sin(t * 0.7) * 0.03);
+          L.obj.position.y = reduce ? 0 : Math.sin(t * 0.9) * 0.04;   // gentle float
         }
+        L.renderer.render(L.scene, L.camera);
       }
     })();
   })();
