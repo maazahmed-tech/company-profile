@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
 
 <style>
 /* =================================================================
@@ -199,37 +200,56 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
 
 /* ---- 3D logo trigger (project slides) ---- */
 .logo-side{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
-.logo3d{position:relative;height:clamp(300px,64vh,540px);width:clamp(300px,34vw,520px);background:transparent;border:0;padding:0;cursor:pointer;
-  display:block;will-change:transform;}
-.logo3d-cv{position:absolute;inset:0;width:100%;height:100%;display:block;}
+.logo3d{position:relative;height:clamp(300px,66vh,560px);width:clamp(300px,36vw,540px);background:transparent;border:0;padding:0;cursor:pointer;display:block;}
+.logo3d canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;}
 .logo3d-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--faint);}
 .logo3d.loaded .logo3d-load{display:none;}
 .logo3d-hint{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.07em;
   color:#fff;background:rgba(9,11,20,.66);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);padding:9px 16px;border-radius:999px;
   border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 22px -8px rgba(0,0,0,.55);display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
-  transition:transform .25s ease,background .25s ease;pointer-events:none;}
+  transition:transform .25s ease,background .25s ease;pointer-events:none;z-index:2;}
 .logo3d-hint b{font-weight:400;color:var(--t-magenta);font-size:14px;line-height:1;}
 .logo3d:hover .logo3d-hint{transform:translateX(-50%) translateY(-3px);background:rgba(9,11,20,.85);}
 
-/* ---- live-app popup ---- */
-.appmodal{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:5vh 4vw;
+/* ---- live-app popup (large landscape, device-preview) ---- */
+.appmodal{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;padding:4vh 4vw;
   opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease;}
 .appmodal.open{opacity:1;visibility:visible;}
-.appmodal-backdrop{position:absolute;inset:0;background:rgba(4,6,16,.6);-webkit-backdrop-filter:blur(11px) saturate(120%);backdrop-filter:blur(11px) saturate(120%);cursor:pointer;}
-.appmodal-stage{position:relative;z-index:1;transform:scale(.84);opacity:.35;transition:transform .34s cubic-bezier(.2,.9,.3,1),opacity .3s ease;}
+.appmodal-backdrop{position:absolute;inset:0;background:rgba(4,6,16,.62);-webkit-backdrop-filter:blur(12px) saturate(120%);backdrop-filter:blur(12px) saturate(120%);cursor:pointer;}
+.appmodal-stage{position:relative;z-index:1;transform:scale(.86);opacity:.35;transition:transform .34s cubic-bezier(.2,.9,.3,1),opacity .3s ease;}
 .appmodal.open .appmodal-stage{transform:scale(1);opacity:1;}
-.appmodal-screen{position:relative;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 50px 120px -30px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.09);}
-.appmodal-screen.portrait{height:min(86vh,880px);aspect-ratio:400/860;max-width:92vw;}
-.appmodal-screen.landscape{width:min(92vw,1180px);height:min(80vh,760px);}
+.appmodal-screen{position:relative;width:min(90vw,1400px);height:min(86vh,900px);background:#fff;border-radius:22px;overflow:hidden;
+  box-shadow:0 50px 130px -30px rgba(0,0,0,.78),0 0 0 1px rgba(255,255,255,.09);}
 .appmodal-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#fff;}
 .appmodal-load{position:absolute;inset:0;z-index:1;background:linear-gradient(110deg,#e9edf4 30%,#f6f8fc 50%,#e9edf4 70%);background-size:220% 100%;animation:phoneShim 1.4s linear infinite;}
 .appmodal.ready .appmodal-load{opacity:0;pointer-events:none;transition:opacity .5s ease;}
 @keyframes phoneShim{from{background-position:200% 0}to{background-position:-200% 0}}
-.appmodal-close{position:absolute;top:-15px;right:-15px;z-index:3;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+/* preview cover: captures the pointer so we can draw the touch cursor (app not clickable in preview) */
+.appmodal-cover{position:absolute;inset:0;z-index:2;cursor:none;background:transparent;}
+.appmodal.live .appmodal-cover{display:none;}
+.appmodal-close{position:absolute;top:-15px;right:-15px;z-index:5;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
   background:rgba(14,16,26,.92);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
   box-shadow:0 10px 30px -8px rgba(0,0,0,.6);transition:transform .2s ease,background .2s ease;}
 .appmodal-close:hover{transform:scale(1.08);background:rgba(30,32,46,.96);}
-@media (max-width:760px){.appmodal-screen.portrait{height:auto;width:86vw;aspect-ratio:400/820;}.appmodal-screen.landscape{width:92vw;height:auto;aspect-ratio:9/15;}.appmodal-close{top:6px;right:6px;}}
+.appmodal-interact{position:absolute;top:-15px;left:-15px;z-index:5;height:40px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(100deg,#1763E6,#E81CB6);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.05em;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;box-shadow:0 10px 30px -8px rgba(0,0,0,.5);transition:transform .2s ease,filter .2s ease;}
+.appmodal-interact:hover{transform:translateY(-1px);filter:brightness(1.08);}
+.appmodal-interact .dot{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.8);}
+.appmodal.live .appmodal-interact{background:rgba(14,16,26,.92);}
+.appmodal.live .appmodal-interact .dot{background:#39d98a;box-shadow:0 0 8px rgba(57,217,138,.9);}
+/* branded touch cursor (device-emulation, only over the app in preview) */
+.touchcursor{position:fixed;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;z-index:9994;
+  background:radial-gradient(circle at 38% 34%,rgba(120,170,255,.5),rgba(232,28,182,.4) 68%,rgba(232,28,182,0));
+  border:1.5px solid rgba(255,255,255,.55);box-shadow:0 0 22px -3px rgba(160,60,220,.85),inset 0 0 12px rgba(255,255,255,.25);
+  opacity:0;transform:scale(1);transition:opacity .18s ease,transform .12s ease;}
+.touchcursor.show{opacity:1;}
+.touchcursor.tap{transform:scale(.6);}
+.touchripple{position:fixed;left:0;top:0;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;pointer-events:none;z-index:9993;
+  border:2px solid rgba(200,120,255,.7);animation:touchRip .5s ease-out forwards;}
+@keyframes touchRip{from{transform:scale(.5);opacity:.75}to{transform:scale(2.4);opacity:0}}
+html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
+@media (max-width:760px){.appmodal-screen{width:96vw;height:90vh;}.appmodal-close{top:6px;right:6px;}.appmodal-interact{top:6px;left:6px;}}
 
 /* review cards — themed per source platform */
 .review-card{padding:0;overflow:hidden;display:flex;flex-direction:column;}
@@ -534,7 +554,6 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
       </div>
       <div class="side logo-side">
         <button class="logo3d" type="button" data-model="models/urgentcarex.glb" data-app="https://urgentcarexthemedesignconcept1versi-seven.vercel.app/" data-shape="portrait" data-title="UrgentCareX" aria-label="View the UrgentCareX app">
-          <canvas class="logo3d-cv"></canvas>
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -566,7 +585,6 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
       </div>
       <div class="side logo-side">
         <button class="logo3d" type="button" data-model="models/behavebridge.glb" data-app="https://education-lightthemev1.vercel.app/" data-shape="landscape" data-title="BehaveBridge" aria-label="View the BehaveBridge app">
-          <canvas class="logo3d-cv"></canvas>
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -596,7 +614,6 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
       </div>
       <div class="side logo-side">
         <button class="logo3d" type="button" data-model="models/dohuub.glb" data-app="https://dohuub-app-light-blue-theme.vercel.app/" data-shape="portrait" data-title="DOHUUB" aria-label="View the DOHUUB app">
-          <canvas class="logo3d-cv"></canvas>
           <span class="logo3d-load">loading…</span>
           <span class="logo3d-hint">View app <b>↗</b></span>
         </button>
@@ -715,16 +732,19 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
 
 </div><!-- /root -->
 
-  <!-- live-app popup -->
+  <!-- live-app popup (device preview + interact toggle) -->
   <div class="appmodal" id="appmodal" aria-hidden="true">
     <div class="appmodal-backdrop" data-close></div>
     <div class="appmodal-stage">
+      <button class="appmodal-interact" id="appmodalInteract" type="button"><span class="dot"></span><span id="appmodalInteractLabel">Interact</span></button>
       <button class="appmodal-close" id="appmodalClose" type="button" aria-label="Close">×</button>
       <div class="appmodal-screen" id="appmodalScreen">
         <div class="appmodal-load"></div>
         <iframe class="appmodal-frame" id="appmodalFrame" title="" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <div class="appmodal-cover" id="appmodalCover"></div>
       </div>
     </div>
+    <div class="touchcursor" id="touchcursor"></div>
   </div>
 
 <!-- custom cursor (gradient reticle) + fading trail (desktop only) -->
@@ -1357,99 +1377,158 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
   })();
 
   // =================================================================
-  // 3D LOGOS (project slides) + LIVE-APP POPUP
+  // 3D LOGOS (project slides) + LIVE-APP POPUP (device preview)
   // =================================================================
   (function initLogos(){
     var THREE = window.THREE;
     var allPanels = [].slice.call(document.querySelectorAll('.panel'));
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // ---- popup ----
-    var modal = document.getElementById('appmodal');
-    var frameEl = document.getElementById('appmodalFrame');
-    var screenEl = document.getElementById('appmodalScreen');
-    var closeBtn = document.getElementById('appmodalClose');
-    function openApp(url, shape, title){
-      screenEl.className = 'appmodal-screen ' + (shape === 'landscape' ? 'landscape' : 'portrait');
-      frameEl.title = title + ' — live app';
-      modal.classList.remove('ready');
-      frameEl.onload = function (){ modal.classList.add('ready'); };
-      frameEl.src = url;
-      modal.classList.add('open');
-      modal.setAttribute('aria-hidden', 'false');
+    // ---- Draco loader + one-time model cache ----
+    var loader = null, cache = {};
+    if (THREE && THREE.GLTFLoader){
+      loader = new THREE.GLTFLoader();
+      if (THREE.DRACOLoader){
+        var draco = new THREE.DRACOLoader();
+        draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+        loader.setDRACOLoader(draco);
+      }
     }
-    function closeApp(){
-      modal.classList.remove('open');
-      modal.setAttribute('aria-hidden', 'true');
-      setTimeout(function (){ if (!modal.classList.contains('open')){ frameEl.removeAttribute('src'); modal.classList.remove('ready'); } }, 340);
+    function loadModel(url){
+      if (!loader) return Promise.reject('no loader');
+      if (!cache[url]) cache[url] = new Promise(function (res, rej){ loader.load(url, function (g){ res(g.scene); }, undefined, rej); });
+      return cache[url];
     }
-    if (modal){
-      closeBtn.addEventListener('click', closeApp);
-      modal.addEventListener('click', function (e){ if (e.target.hasAttribute('data-close')) closeApp(); });
-      window.addEventListener('keydown', function (e){ if (e.key === 'Escape' && modal.classList.contains('open')) closeApp(); });
+    // purely diffuse (matte) materials, like the Assemble prototype
+    function matteClone(src){
+      var root = src.clone(true);
+      root.traverse(function (o){
+        if (o.isMesh && o.material){
+          var old = Array.isArray(o.material) ? o.material[0] : o.material;
+          if (old.map) old.map.encoding = THREE.sRGBEncoding;
+          o.material = new THREE.MeshLambertMaterial({ map: old.map || null, color: old.color ? old.color.clone() : new THREE.Color(0xffffff),
+                                                       transparent: old.transparent, opacity: old.opacity, side: old.side });
+        }
+      });
+      return root;
     }
 
-    // ---- 3D logo viewers ----
-    var loader = (THREE && THREE.GLTFLoader) ? new THREE.GLTFLoader() : null;
+    // ---- logos ----
     var logos = [].map.call(document.querySelectorAll('.logo3d'), function (btn){
-      return { btn: btn, canvas: btn.querySelector('.logo3d-cv'), idx: allPanels.indexOf(btn.closest('.panel')),
-               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), shape: btn.getAttribute('data-shape'),
-               title: btn.getAttribute('data-title'), started: false, obj: null, renderer: null, scene: null, camera: null };
+      return { btn: btn, idx: allPanels.indexOf(btn.closest('.panel')),
+               model: btn.getAttribute('data-model'), url: btn.getAttribute('data-app'), title: btn.getAttribute('data-title'), v: null };
     });
-
     logos.forEach(function (L){
       var dx = 0, dy = 0;
       L.btn.addEventListener('mousedown', function (e){ dx = e.clientX; dy = e.clientY; });
-      L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.shape, L.title); });
+      L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.title); });
       if (!loader) L.btn.classList.add('loaded');
     });
+    // preload all three once, quietly, at startup
+    if (loader) logos.forEach(function (L){ loadModel(L.model).then(function (){ L.btn.classList.add('loaded'); }).catch(function (){}); });
 
-    function sizeViewer(L){
-      if (!L.renderer) return;
-      var w = L.canvas.clientWidth || 1, h = L.canvas.clientHeight || 1;
-      L.renderer.setSize(w, h, false);
-      L.camera.aspect = w / h; L.camera.updateProjectionMatrix();
+    function sizeV(L){
+      if (!L.v) return;
+      var w = L.btn.clientWidth || 1, h = L.btn.clientHeight || 1;
+      L.v.r.setSize(w, h, false); L.v.r.domElement.style.width = '100%'; L.v.r.domElement.style.height = '100%';
+      L.v.cam.aspect = w / h; L.v.cam.updateProjectionMatrix();
     }
-    function initViewer(L){
-      if (L.started || !loader) return;
-      L.started = true;
-      var r = new THREE.WebGLRenderer({ canvas: L.canvas, antialias: true, alpha: true });
-      r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-      r.outputEncoding = THREE.sRGBEncoding;
+    function mount(L){
+      if (L.v || !loader) return;
+      var r = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); r.setClearAlpha(0);
+      r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.7;
+      L.btn.appendChild(r.domElement);
       var scene = new THREE.Scene();
-      var cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100); cam.position.set(0, 0.12, 2.7);
-      scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-      var k = new THREE.DirectionalLight(0xffffff, 2.3); k.position.set(2, 3, 2.5); scene.add(k);
-      var fl = new THREE.DirectionalLight(0x88aaff, 1.1); fl.position.set(-2.5, 1, -1.5); scene.add(fl);
-      var bl = new THREE.DirectionalLight(0xff66cc, 0.7); bl.position.set(0, -1.5, -2); scene.add(bl);
-      var pmrem = new THREE.PMREMGenerator(r);
-      var envS = new THREE.Scene(); envS.background = new THREE.Color(0x4a5568);
-      scene.environment = pmrem.fromScene(envS, 0.03).texture;
-      L.renderer = r; L.scene = scene; L.camera = cam;
-      sizeViewer(L);
-      loader.load(L.model, function (g){
-        var o = g.scene, box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
-        o.position.sub(c); var md = Math.max(s.x, s.y, s.z) || 1; o.scale.setScalar(1.35 / md);
-        scene.add(o); L.obj = o; L.btn.classList.add('loaded');
-      }, undefined, function (){ L.btn.classList.add('loaded'); });
+      var cam = new THREE.PerspectiveCamera(35, 1, 0.05, 100); cam.position.set(0, 0, 4);
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4048, 1.7));
+      var k = new THREE.DirectionalLight(0xffffff, 1.9); k.position.set(0.6, 2.4, 3.5); scene.add(k);
+      var fl = new THREE.DirectionalLight(0xdce6ff, 1.0); fl.position.set(-3.5, 1.2, 2.0); scene.add(fl);
+      var rim = new THREE.DirectionalLight(0xffffff, 0.5); rim.position.set(0, 2.5, -4); scene.add(rim);
+      var v = L.v = { r: r, scene: scene, cam: cam, obj: null };
+      sizeV(L);
+      loadModel(L.model).then(function (src){
+        if (L.v !== v) return;                                   // unmounted while loading
+        var o = matteClone(src);
+        var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+        o.position.sub(c);
+        var maxDim = Math.max(s.x, s.y, s.z) || 1, fov = cam.fov * Math.PI / 180;
+        cam.position.set(0, 0, (maxDim / 2) / Math.tan(fov / 2) * 1.42); cam.lookAt(0, 0, 0);   // camera-fit
+        scene.add(o); v.obj = o; L.btn.classList.add('loaded');
+      }).catch(function (){});
     }
-    window.addEventListener('resize', function (){ logos.forEach(sizeViewer); });
+    function unmount(L){
+      if (!L.v) return;
+      try { L.v.r.dispose(); var d = L.v.r.domElement; if (d && d.parentNode) d.parentNode.removeChild(d); } catch (e){}
+      L.v = null;
+    }
+    window.addEventListener('resize', function (){ logos.forEach(sizeV); });
 
+    // render loop — only ONE active viewer (the nearest logo in view)
     (function loop(){
       requestAnimationFrame(loop);
-      var vw = window.innerWidth, t = (performance.now() - t0) / 1000;
+      var vw = window.innerWidth, t = (performance.now() - t0) / 1000, active = -1, best = Infinity;
       for (var i = 0; i < logos.length; i++){
-        var L = logos[i], off = offsets[L.idx] || 0, near = Math.abs(current - off) < vw * 1.3;
-        if (near && !L.started) initViewer(L);
-        if (!L.renderer || !near) continue;                 // pause render when off-screen
-        if (L.obj){
-          L.obj.rotation.y = reduce ? 0.5 : (t * 0.5 + lmx * 0.45);   // auto-rotate + lean to cursor
-          L.obj.rotation.x = reduce ? 0 : (-lmy * 0.18 + Math.sin(t * 0.7) * 0.03);
-          L.obj.position.y = reduce ? 0 : Math.sin(t * 0.9) * 0.04;   // gentle float
-        }
-        L.renderer.render(L.scene, L.camera);
+        var d = Math.abs(current - (offsets[logos[i].idx] || 0));
+        if (d < vw * 0.9 && d < best){ best = d; active = i; }
+      }
+      for (var j = 0; j < logos.length; j++){
+        var L = logos[j];
+        if (j === active){
+          if (!L.v) mount(L);
+          if (L.v){
+            if (L.v.obj){
+              L.v.obj.rotation.y = reduce ? 0 : (t * 0.45 + lmx * 0.5);          // slow auto-rotate (~14s) + lean
+              L.v.obj.rotation.x = reduce ? 0 : (-lmy * 0.2 + Math.sin(t * 0.6) * 0.02);
+              L.v.obj.position.y = reduce ? 0 : Math.sin(t * 0.8) * 0.03;
+            }
+            L.v.r.render(L.v.scene, L.v.cam);
+          }
+        } else if (L.v){ unmount(L); }
       }
     })();
+
+    // ---- popup: large landscape, device-preview + Interact toggle + touch cursor ----
+    var modal = document.getElementById('appmodal');
+    var frameEl = document.getElementById('appmodalFrame');
+    var closeBtn = document.getElementById('appmodalClose');
+    var interactBtn = document.getElementById('appmodalInteract');
+    var interactLabel = document.getElementById('appmodalInteractLabel');
+    var cover = document.getElementById('appmodalCover');
+    var tcur = document.getElementById('touchcursor');
+    var htmlEl = document.documentElement;
+    function openApp(url, title){
+      modal.classList.remove('ready', 'live');
+      frameEl.title = title + ' — app';
+      frameEl.onload = function (){ modal.classList.add('ready'); };
+      frameEl.src = url;
+      modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
+      htmlEl.classList.add('modal-open'); htmlEl.classList.remove('cursor-custom');   // native cursor in modal; reticle hidden
+      setLive(false);
+    }
+    function closeApp(){
+      modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
+      htmlEl.classList.remove('modal-open'); htmlEl.classList.add('cursor-custom');
+      tcur.classList.remove('show');
+      setTimeout(function (){ if (!modal.classList.contains('open')){ frameEl.removeAttribute('src'); modal.classList.remove('ready', 'live'); } }, 340);
+    }
+    function setLive(on){ modal.classList.toggle('live', on); interactLabel.textContent = on ? 'Live' : 'Interact'; if (on) tcur.classList.remove('show'); }
+    var tcx = 0, tcy = 0, tcs = 1;
+    function applyTC(){ tcur.style.transform = 'translate(' + tcx + 'px,' + tcy + 'px) scale(' + tcs + ')'; }
+    if (modal && cover){
+      closeBtn.addEventListener('click', closeApp);
+      interactBtn.addEventListener('click', function (){ setLive(!modal.classList.contains('live')); });
+      modal.addEventListener('click', function (e){ if (e.target.hasAttribute('data-close')) closeApp(); });
+      window.addEventListener('keydown', function (e){ if (e.key === 'Escape' && modal.classList.contains('open')) closeApp(); });
+      cover.addEventListener('mousemove', function (e){ tcx = e.clientX; tcy = e.clientY; applyTC(); tcur.classList.add('show'); });
+      cover.addEventListener('mouseleave', function (){ tcur.classList.remove('show'); });
+      cover.addEventListener('mousedown', function (e){
+        tcs = 0.62; applyTC();
+        var rip = document.createElement('div'); rip.className = 'touchripple'; rip.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)';
+        modal.appendChild(rip); setTimeout(function (){ if (rip.parentNode) rip.parentNode.removeChild(rip); }, 520);
+      });
+      cover.addEventListener('mouseup', function (){ tcs = 1; applyTC(); });
+    }
   })();
 
 })();
