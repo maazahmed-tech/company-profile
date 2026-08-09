@@ -201,7 +201,7 @@ html.cursor-custom,html.cursor-custom *{cursor:none !important;}
 
 /* ---- 3D logo trigger (project slides) ---- */
 .logo-side{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
-.logo3d{position:relative;height:clamp(300px,66vh,560px);width:clamp(300px,36vw,540px);background:transparent;border:0;padding:0;cursor:pointer;display:block;}
+.logo3d{position:relative;height:clamp(320px,68vh,600px);width:clamp(320px,40vw,600px);background:transparent;border:0;padding:0;cursor:pointer;display:block;}
 .logo3d canvas{position:absolute;inset:0;width:100%!important;height:100%!important;display:block;}
 .logo3d-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--faint);}
 .logo3d.loaded .logo3d-load{display:none;}
@@ -356,8 +356,10 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
   .track{position:relative;flex-direction:column;height:auto;transform:none !important;}
   .panel{flex:0 0 auto;width:100vw;height:auto;min-height:100vh;min-height:100svh;padding:100px 22px 64px;justify-content:center;}
   .contact-panel{padding-bottom:72px;}
-  .rowpanel{flex-direction:column;align-items:flex-start;gap:30px;}
-  .side,.col-main{flex:0 0 auto;max-width:100%;width:100%;}
+  .rowpanel{flex-direction:column;align-items:center;gap:30px;}
+  /* every column/side becomes a full-width, centred block — overrides the inline max-width:42% that was squishing the founder card to 139px */
+  .side,.col-main{flex:0 0 auto !important;width:100% !important;max-width:560px !important;margin-left:auto !important;margin-right:auto !important;}
+  .side .card img{width:100% !important;height:clamp(160px,34vw,240px) !important;object-fit:cover;object-position:top center;display:block;}
   .grid4{grid-template-columns:1fr 1fr;}
   .grid3{grid-template-columns:1fr;}
   .grid5,.grid6{grid-template-columns:1fr;border-top:none;}
@@ -369,8 +371,10 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
   .story-hint{display:none;}
   .story-end{display:none;}
   /* reviews: drop the 3D map, stack the cards normally on mobile */
-  .reviews-panel{padding:100px 22px 64px;}
-  #mapcanvas,.map-lines{display:none;}
+  .reviews-panel{padding:84px 18px 56px;justify-content:flex-start;}
+  /* show the US map as a tidy banner at the top of the reviews slide (desktop connector lines stay hidden) */
+  #mapcanvas{position:relative;display:block;width:100%;height:40vh;z-index:0;margin-bottom:14px;border-radius:16px;}
+  .map-lines{display:none;}
   .rv-row{flex-direction:column;gap:16px;}
   .map-pop{max-width:100%;}
   .bottomnav{display:none;}
@@ -898,11 +902,18 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
     FX.render();
 
     // 3D US map on the Reviews panel — render + reveal pins only while it's near view
-    if (MAP.ready && !isMobile()){
-      var ri = PANELS.indexOf('Reviews'), rs = offsets[ri] || 0, vw2 = window.innerWidth;
-      if (current > rs - vw2*1.3 && current < rs + vw2*1.3){
-        var rprog = Math.max(0, Math.min(1, (current - (rs - vw2*0.78)) / (vw2*0.95)));
-        MAP.render(rprog, (performance.now() - t0) / 1000, lmx, lmy);
+    if (MAP.ready){
+      var tsec = (performance.now() - t0) / 1000;
+      if (isMobile()){
+        // mobile: it's a banner in normal flow — render (pins fully revealed) only while it's on/near screen
+        var mcv = document.getElementById('mapcanvas');
+        if (mcv){ var mr = mcv.getBoundingClientRect(); if (mr.bottom > -60 && mr.top < window.innerHeight + 60) MAP.render(1, tsec, 0, 0); }
+      } else {
+        var ri = PANELS.indexOf('Reviews'), rs = offsets[ri] || 0, vw2 = window.innerWidth;
+        if (current > rs - vw2*1.3 && current < rs + vw2*1.3){
+          var rprog = Math.max(0, Math.min(1, (current - (rs - vw2*0.78)) / (vw2*0.95)));
+          MAP.render(rprog, tsec, lmx, lmy);
+        }
       }
     }
 
@@ -1248,17 +1259,20 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
     }
     function resize(){
       if (!ready) return;
-      var w = stage.clientWidth, h = stage.clientHeight;
+      var w = cv.clientWidth, h = cv.clientHeight;              // size to the canvas box (desktop: == panel; mobile: the banner)
       if (w === 0 || h === 0) return;
       renderer.setSize(w, h, false);
-      camera.aspect = w / h; camera.updateProjectionMatrix();
+      camera.aspect = w / h;
+      camera.position.z = camera.aspect < 1.4 ? 4.0 * (1.4 / camera.aspect) : 4.0;  // pull back on narrow/portrait so the wide map still fits
+      camera.updateProjectionMatrix();
     }
     // reveal 0..1 from scroll; time for float/pulse; mx,my smoothed mouse
     function render(reveal, time, mx, my){
       if (!ready) return;
-      var w = stage.clientWidth, h = stage.clientHeight;
+      var w = cv.clientWidth, h = cv.clientHeight;
       if (w === 0 || h === 0) return;
-      if (Math.abs(cv.clientWidth - w) > 1 || Math.abs(cv.clientHeight - h) > 1) resize();
+      var dpr = window.devicePixelRatio || 1;
+      if (Math.abs(cv.width / dpr - w) > 2 || Math.abs(cv.height / dpr - h) > 2) resize();
       dots.material.opacity = Math.min(1, reveal*2.2) * 0.8;   // backdrop — a touch dimmer
       group.rotation.z = Math.sin(time*0.2)*0.03;
       group.rotation.x = -0.62 + Math.sin(time*0.25)*0.02 + (my||0)*0.05;
@@ -1319,7 +1333,7 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
   // BOOT
   // =================================================================
   try { FX.init(); } catch (err){ console.error('aurora init failed', err); }
-  try { if(!isMobile()) MAP.init(); } catch (err){ console.error('map init failed', err); }
+  try { MAP.init(); } catch (err){ console.error('map init failed', err); }   // desktop backdrop + mobile banner
   applyTheme();
   measure();                                   // measure panel offsets (Story panel is wider than a screen)
   window.addEventListener('load', measure);    // re-measure once fonts/layout settle
@@ -1394,9 +1408,30 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         loader.setDRACOLoader(draco);
       }
     }
+    // Persist the ~5MB GLBs in Cache Storage so repeat visits parse from local disk with zero network.
+    // (bump the version tag if the .glb files ever change, to invalidate the stored copy)
+    var MODEL_CACHE = 'dlhq-models-v1';
+    function fetchModelBuffer(url){
+      if (window.caches && window.isSecureContext){
+        return caches.open(MODEL_CACHE).then(function (c){
+          return c.match(url).then(function (hit){
+            if (hit) return hit.arrayBuffer();                                  // local hit → instant
+            return fetch(url).then(function (resp){
+              if (resp && resp.ok){ try { c.put(url, resp.clone()); } catch (e){} }  // stash for next time
+              return resp.arrayBuffer();
+            });
+          });
+        });
+      }
+      return fetch(url).then(function (r){ return r.arrayBuffer(); });
+    }
     function loadModel(url){
       if (!loader) return Promise.reject('no loader');
-      if (!cache[url]) cache[url] = new Promise(function (res, rej){ loader.load(url, function (g){ res(g.scene); }, undefined, rej); });
+      if (!cache[url]) cache[url] = new Promise(function (res, rej){
+        fetchModelBuffer(url)
+          .then(function (buf){ loader.parse(buf, '', function (g){ res(g.scene); }, rej); })
+          .catch(function (){ loader.load(url, function (g){ res(g.scene); }, undefined, rej); });  // last-ditch fallback
+      });
       return cache[url];
     }
     // fully flat / unlit — zero shine, zero shading (pure model colour + texture)
@@ -1447,11 +1482,24 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
       L.btn.addEventListener('click', function (e){ if (Math.abs(e.clientX - dx) + Math.abs(e.clientY - dy) < 6) openApp(L.url, L.title, L.fit); });
       if (!loader) L.btn.classList.add('loaded');
     });
+    // frame the model so it fills the canvas AND never clips through the full sway range,
+    // fitting BOTH axes (vertical fov + horizontal via aspect) and accounting for depth swing.
+    function fitCam(L){
+      var v = L.v; if (!v || !v.fit) return;
+      var s = v.fit, fov = v.cam.fov * Math.PI / 180, aspect = v.cam.aspect || 1;
+      var effW = Math.sqrt(s.x * s.x + s.z * s.z);   // widest projection as it turns about Y
+      var effH = Math.sqrt(s.y * s.y + s.z * s.z);   // tallest projection as it tilts about X
+      var distV = (effH / 2) / Math.tan(fov / 2);
+      var distH = (effW / 2) / Math.tan(fov / 2) / aspect;
+      var dist = Math.max(distV, distH) * 1.15;      // small breathing margin so edges never kiss
+      v.cam.position.set(0, 0, dist); v.cam.lookAt(0, 0, 0);
+    }
     function sizeV(L){
       if (!L.v) return;
       var w = L.btn.clientWidth || 1, h = L.btn.clientHeight || 1;
       L.v.r.setSize(w, h, false); L.v.r.domElement.style.width = '100%'; L.v.r.domElement.style.height = '100%';
       L.v.cam.aspect = w / h; L.v.cam.updateProjectionMatrix();
+      fitCam(L);                                     // re-fit on every resize (portrait⇄landscape changes aspect)
     }
     function mount(L){
       if (L.v || !loader) return;
@@ -1469,9 +1517,9 @@ html.modal-open .dlhq-cursor,html.modal-open #trail{opacity:0!important;}
         var box = new THREE.Box3().setFromObject(o), c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
         o.position.sub(c);                                          // centre the geometry inside a wrapper group
         var grp = new THREE.Group(); grp.add(o); scene.add(grp);    // group origin = geometry centre
-        var maxDim = Math.max(s.x, s.y, s.z) || 1, fov = cam.fov * Math.PI / 180;
-        cam.position.set(0, 0, (maxDim / 2) / Math.tan(fov / 2) * 1.42); cam.lookAt(0, 0, 0);   // camera-fit, centred
-        v.obj = grp; L.btn.classList.add('loaded');
+        v.obj = grp; v.fit = { x: s.x, y: s.y, z: s.z };            // remember size so we can re-fit on resize
+        fitCam(L);                                                  // aspect-aware camera-fit, centred
+        L.btn.classList.add('loaded');
       }).catch(function (){});
     }
     window.addEventListener('resize', function (){ logos.forEach(sizeV); });
